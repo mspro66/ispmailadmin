@@ -1,9 +1,9 @@
 ISPmail Admin
 -------------
 
-ISPmail Admin is a web tool writen in php by Ole Jungclaussen based on database strutture,
-defined and explained in **ISPmail Guide** maintainded by Christoph Haas on 
-[workaround.org web site](https://workaround.org/ispmail-trixie/).
+ISPmail Admin is a web tool written in php by Ole Jungclaussen based on the database structure
+defined and explained in **ISPmail Guide** maintained by Christoph Haas on 
+[workaround.org website](https://workaround.org/ispmail-trixie/).
 
 In this repository there is a revisited enhanced version made by [me](https://github.com/mspro66).
 
@@ -27,8 +27,9 @@ In this repository there is a revisited enhanced version made by [me](https://gi
 - Improved and added various explanatory error messages
   
 ### Installation 
-1) follow setup instructions on the [original README](doc/README_original.md) by O.J.
-2) Open a sql console and run the following statements:
+1) copy sample config file `cfg/config.sample.inc.php` to `cfg/config.inc.php`
+2) follow setup instructions on the [original README](doc/README_original.md) by O.J.
+3) Open a sql console and run the following statements:
    - add new field on virtual_aliases table:
        ```sql
        alter table virtual_aliases
