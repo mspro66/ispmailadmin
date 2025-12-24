@@ -127,30 +127,37 @@ class EmailOverview {
         )));
         else if(null===$aRow);
         else if(0!=($iErr = lib\checkListPages($this->aStat, ($nEntries = $aRow['nCnt']))));
-        
-        if(0!=($iErr = $this->App->DB->query($rRslt,
-            "SELECT"
-            ." domain_id AS idSrcDomain"
-            .",SUBSTR(email, 1, INSTR(email, '@')-1) AS sSrcUser"
-            .",SUBSTR(email, INSTR(email, '@')+1) AS sSrcDomain"
-            .",NULL AS sTarUser"
-            .",NULL AS sTarDomain"
-            .",NULL AS idTarUser"
-            .(!IMA_CFG_USE_QUOTAS ? "" : ", quota AS iQuota") 
-            ." FROM `virtual_users`"
-            ." UNION SELECT"
-            ." alias.domain_id AS idTarDomain"
-            .",SUBSTR(alias.source, 1, INSTR(alias.source, '@')-1) AS sSrcUser"
-            .",SUBSTR(alias.source, INSTR(alias.source, '@')+1) AS sSrcDomain"
-            .",SUBSTR(alias.destination, 1, INSTR(alias.destination, '@')-1) AS sTarUser"
-            .",SUBSTR(alias.destination, INSTR(alias.destination, '@')+1) AS sTarDomain"
-            .",user.id AS idTarUser"
-            .(!IMA_CFG_USE_QUOTAS ? "" : ",NULL AS iQuota")
-            ." FROM `virtual_aliases` AS alias"
-            ." LEFT JOIN `virtual_users` AS user ON(user.email=alias.destination)"
-            ." ORDER BY ".$this->aStat['sSort']
-            .lib\makeListPagesSqlLimit($this->aStat)
-        )));
+
+        $sqlUseQuotas = (IMA_CFG_USE_QUOTAS ? "quota AS iQuota" : "");
+        $sqlPager = lib\makeListPagesSqlLimit($this->aStat);
+
+        if(0!=($iErr = $this->App->DB->query($rRslt, <<<SQL
+                SELECT
+                    domain_id AS idSrcDomain, 
+                    SUBSTR(email, 1, INSTR(email, '@')-1) AS sSrcUser,
+                    SUBSTR(email, INSTR(email, '@')+1) AS sSrcDomain,
+                    NULL AS sTarUser,
+                    NULL AS sTarDomain,
+                    NULL AS idTarUser,    
+                    $sqlUseQuotas 
+                FROM virtual_users
+                where substring(email, 1, 1) <> '@'
+                UNION 
+                SELECT
+                    alias.domain_id AS idTarDomain,
+                    SUBSTR(alias.source, 1, INSTR(alias.source, '@')-1) AS sSrcUser,
+                    SUBSTR(alias.source, INSTR(alias.source, '@')+1) AS sSrcDomain,
+                    SUBSTR(alias.destination, 1, INSTR(alias.destination, '@')-1) AS sTarUser,
+                    SUBSTR(alias.destination, INSTR(alias.destination, '@')+1) AS sTarDomain,
+                    user.id AS idTarUser,
+                    $sqlUseQuotas
+                FROM virtual_aliases AS alias
+                LEFT JOIN virtual_users AS user ON(user.email=alias.destination)
+                where substring(email, 1, 1) <> '@'
+                ORDER BY {$this->aStat['sSort']}
+                           
+                $sqlPager
+            SQL )));
         else if(0!=($iErr = $this->App->DB->getNumRows($nRows, $rRslt)));
         else if(0==$nRows) $sHtml .= '<tr class="" colspan="6"><td class="">No domains created yet.</td></tr>';
         else while(0==($iErr = $this->App->DB->fetchArray($aRow, $rRslt, MYSQLI_ASSOC)) && NULL!==$aRow){
@@ -158,12 +165,12 @@ class EmailOverview {
             
             $sHtml .= 
               '<tr>'
-                .'<td class="">'.$aRow['sSrcUser'].'</td>'
+                .'<td class="num">'.$aRow['sSrcUser'].'</td>'
                 .'<td class="">@'.$aRow['sSrcDomain'].'</td>'
             ;
             if($bAccount) $sHtml .= 
                 '<td><i>account</i></td>'
-                .(!IMA_CFG_USE_QUOTAS ? '' : '<td class="">'.EmailAccounts::cnvQuotaToHuman($aRow['iQuota']).'</td>')
+                .(!IMA_CFG_USE_QUOTAS ? '' : '<td class="num">'.EmailAccounts::cnvQuotaToHuman($aRow['iQuota']).'</td>')
                 .'<td></td>'
                 .'<td></td>'
                 .'<td class="icon">'
@@ -178,7 +185,7 @@ class EmailOverview {
             else  $sHtml .= 
                 '<td class=""><i>alias of</i></td>'
                 .(!IMA_CFG_USE_QUOTAS ? '' : '<td class=""></td>')
-                .'<td class="">'.$aRow['sTarUser'].'</td>'
+                .'<td class="num">'.$aRow['sTarUser'].'</td>'
                 .'<td class="">@'.$aRow['sTarDomain'].'</td>'
                 .'<td class="icon">'
                   .'<form action="'.$_SERVER['PHP_SELF'].'" method="POST">'
@@ -195,25 +202,21 @@ class EmailOverview {
         if(0!=$iErr);
         else if(0!=($iErr = $Page->addBody(
             '<h3>Adresses handled by this mailserver</h3>'
-            .'<div class="DatabaseList">'
-              .'<form action="'.$_SERVER['PHP_SELF'].'" name="Email_Overview_ListSort" method="POST">'
-                .'<input type="hidden" name="cmd" value="cmd_sort" />'
-                .'<input type="hidden" name="sort" value="su" />'
-              .'</form>'
-              .lib\makeListPages($this->aStat, $nEntries, 'Email_Overview_ListPage')
-              .'<table class="DatabaseList">'
-                .'<tr class="header">'
-                  .'<th>User&nbsp;<img class="icon" src="./img/sortup.png"   onClick="document.forms.Email_Overview_ListSort.sort.value=\'su\'; document.forms.Email_Overview_ListSort.submit();" alt="icon sort" /></th>'
-                  .'<th>Domain&nbsp;<img class="icon" src="./img/sortup.png" onClick="document.forms.Email_Overview_ListSort.sort.value=\'sd\'; document.forms.Email_Overview_ListSort.submit();" alt="icon sort" /></th>'
-                  .'<th></th>'
-                  .(!IMA_CFG_USE_QUOTAS ? '' : '<th>Quota</th>')
-                  .'<th>User&nbsp;<img class="icon" src="./img/sortup.png"   onClick="document.forms.Email_Overview_ListSort.sort.value=\'tu\'; document.forms.Email_Overview_ListSort.submit();" alt="icon sort" /></th>'
-                  .'<th>Domain&nbsp;<img class="icon" src="./img/sortup.png" onClick="document.forms.Email_Overview_ListSort.sort.value=\'td\'; document.forms.Email_Overview_ListSort.submit();" alt="icon sort" /></th>'
-                  .'<th></th>'
-                .'</tr>'
-                .$sHtml
-              .'</table>'
-            .'</div>'
+            . '<div class="listgrid">'
+            . '<form action="' . $_SERVER['PHP_SELF'] . '" name="Email_Overview_ListSort" method="POST">'
+            . '<input type="hidden" name="cmd" value="cmd_sort" />'
+            . '<input type="hidden" name="sort" value="su" />'
+            . '</form>' . lib\makeListPages($this->aStat, $nEntries, 'Email_Overview_ListPage')
+            . '<table>' . '<tr>'
+            . '<th>User&nbsp;<img src="./img/sortup.png"   onClick="document.forms.Email_Overview_ListSort.sort.value=\'su\'; document.forms.Email_Overview_ListSort.submit();" alt="icon sort" /></th>'
+            . '<th>Domain&nbsp;<img src="./img/sortup.png" onClick="document.forms.Email_Overview_ListSort.sort.value=\'sd\'; document.forms.Email_Overview_ListSort.submit();" alt="icon sort" /></th>' . '<th></th>' . (!IMA_CFG_USE_QUOTAS ? '' : '<th>Quota</th>')
+            . '<th>User&nbsp;<img src="./img/sortup.png"   onClick="document.forms.Email_Overview_ListSort.sort.value=\'tu\'; document.forms.Email_Overview_ListSort.submit();" alt="icon sort" /></th>'
+            . '<th>Domain&nbsp;<img src="./img/sortup.png" onClick="document.forms.Email_Overview_ListSort.sort.value=\'td\'; document.forms.Email_Overview_ListSort.submit();" alt="icon sort" /></th>'
+            . '<th></th>'
+            . '</tr>'
+            . $sHtml
+            . '</table>'
+            . '</div>'
         )));
         
         return($iErr);

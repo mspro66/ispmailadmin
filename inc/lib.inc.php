@@ -125,15 +125,7 @@ class ErrLog {
     **/
     private $sLog = '';
 // ########## CONST/DEST
-    function __construct()
-    {
-    }
-    /**
-    **
-    **/
-    function __destruct()
-    {
-    }
+
 // ########## METHOD PUBLIC
     /**
     ** Singleton: returns instance.
@@ -231,5 +223,4 @@ class ErrLog {
         $this->sLog = '';
         return(0);
     }
-};
-?>
+}

@@ -29,17 +29,13 @@ class EmailDomains {
         $this->App  = &$App;
         $this->aStat = &$App->aDomStat;
     }
-    function __destruct()
-    {
-        
-    }
-// ########## METHOD PUBLIC
-    /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
+
+    // ########## METHOD PUBLIC
+
+   /**
+    * @retval integer
+    * @returns !=0 on error
+    */
     public function setTitleAndHelp(HtmlPage &$Page)
     {
         $this->App->Page->setTitle('Domains');
@@ -56,12 +52,11 @@ class EmailDomains {
         );
         return(0);
     }
+
     /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
+    * @retval integer
+    * @returns !=0 on error
+    */
     public function processCmd()
     {
         $iErr = 0;
@@ -91,26 +86,25 @@ class EmailDomains {
         }
         return($iErr);
     }
+
     /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
+    * @retval integer
+    * @returns !=0 on error
+    */
     public function drawCreate(HtmlPage &$Page)
     {
         return($Page->addBody(
             '<h3>Create new</h3>'
-            .'<div class="InputForm">'
+            .'<div class="inputform">'
               .'<form id="create_domain" name="create_domain" action="'.$_SERVER['PHP_SELF'].'" method="POST" onSubmit="return verifyCreateDomain(document.create_domain, false);">'
                 .'<input type="hidden" name="cmd" value="cmd_create" />'
-                .'<table class="InputForm">'
+                .'<table>'
                   .'<tr>'
                     .'<td class="value">'
-                      .'<input type="text" name="sdomain" id="domain_name" placeholder="example.com">'
+                      .'<input type="text" name="sdomain" id="domain_name" placeholder="example.com" autofocus>'
                     .'</td>'
-                    .'<td class="submit_right">'
-                      .'<a class="button" onClick="verifyCreateDomain(document.create_domain, true);">Create</a>'
+                    .'<td class="to_left">'
+                      .'<button onClick="verifyCreateDomain(document.create_domain, true);">Create</button>'
                     .'</td>'
                   .'</tr>'
                 .'</table>'
@@ -130,12 +124,9 @@ class EmailDomains {
         $sHtml = '';
         $nEntries = 0;
         
-        if(0!=($iErr = $this->App->DB->queryOneRow($aRow,
-            " SELECT COUNT(id) AS nCnt FROM `virtual_domains`"
-        )));
+        if(0!=($iErr = $this->App->DB->queryOneRow($aRow,"SELECT COUNT(id) AS nCnt FROM `virtual_domains`"))) ;
         else if(null===$aRow);
         else if(0!=($iErr = lib\checkListPages($this->aStat, ($nEntries = $aRow['nCnt']))));
-        
         
         if(0!=($iErr = $this->App->DB->query($rRslt,
             "SELECT"
@@ -144,7 +135,7 @@ class EmailDomains {
             .",COUNT(user.id) AS nUsers"
             .",(SELECT COUNT(id) FROM virtual_aliases WHERE domain_id=domain.id) AS nAliases"
             ." FROM `virtual_domains` AS domain"
-            ." LEFT JOIN virtual_users AS user ON(user.domain_id = domain.id)"
+            ." LEFT JOIN virtual_users AS user ON(user.domain_id = domain.id and substring(user.email,1,1) <> '@')"
             ." GROUP BY domain.id"
             ." ORDER BY domain.name ASC"
             .lib\makeListPagesSqlLimit($this->aStat)
@@ -154,13 +145,6 @@ class EmailDomains {
         else while(0==($iErr = $this->App->DB->fetchArray($aRow, $rRslt, MYSQLI_ASSOC)) && NULL!==$aRow){
             $sHtml .= 
               '<tr>'
-                .'<td class="icon">'
-                  .'<form name="delete_domain_'.strval($aRow['iId']).'" action="'.$_SERVER['PHP_SELF'].'" method="POST">'
-                    .'<input type="hidden" name="cmd" value="cmd_delete" />'
-                    .'<input type="hidden" name="iddomain" value="'.strval($aRow['iId']).'" />'
-                    .'<img class="icon" src="./img/trash.png" onClick="confirmDeleteDomain(document.delete_domain_'.strval($aRow['iId']).', \''.$aRow['sName'].'\');" alt="icon delete"/>'
-                  .'</form>'
-                .'</td>'
                 .'<td class="">'.$aRow['sName'].'</td>'
                 .'<td class="num">'
                   .(0==$aRow['nUsers']?'&nbsp;&ndash;&nbsp;':$aRow['nUsers'])
@@ -170,23 +154,30 @@ class EmailDomains {
                     .'<input type="hidden" name="cmd" value="cmd_openPage" />'
                     .'<input type="hidden" name="spage" value="page_accounts" />'
                     .'<input type="hidden" name="iddomain" value="'.strval($aRow['iId']).'" />'
-                    .'<img class="icon" src="./img/edit.png" onClick="document.domain_accounts_'.strval($aRow['iId']).'.submit();" alt="icon edit"/>'
+                    .'<img src="./img/edit.png" onClick="document.domain_accounts_'.strval($aRow['iId']).'.submit();" alt="icon edit" title="Go to accounts (mail boxes)"/>'
                   .'</form>'
                 .'</td>'
-              .'</tr>'
+                .'<td class="icon">'
+                .'<form name="delete_domain_'.strval($aRow['iId']).'" action="'.$_SERVER['PHP_SELF'].'" method="POST">'
+                .'<input type="hidden" name="cmd" value="cmd_delete" />'
+                .'<input type="hidden" name="iddomain" value="'.strval($aRow['iId']).'" />'
+                .'<img src="./img/trash.png" onClick="confirmDeleteDomain(document.delete_domain_'.strval($aRow['iId']).', \''.$aRow['sName'].'\');" alt="icon delete"/>'
+                .'</form>'
+                .'</td>'
+             .'</tr>'
             ;
         }
         
         if(0!=$iErr);
         else if(0!=($iErr = $Page->addBody(
             '<h3>Existing Domains</h3>'
-            .'<div class="DatabaseList">'
+            .'<div class="listgrid">'
               .lib\makeListPages($this->aStat, $nEntries, 'Domain_ListPage')
-              .'<table class="DatabaseList">'
-               .'<tr class="header">'
-                 .'<th></th>'
-                 .'<th>Domain</th>'
+              .'<table>'
+               .'<tr >'
+                 .'<th>Domains</th>'
                  .'<th class="num" colspan="2">Accounts</th>'
+                 .'<th></th>'
                .'</tr>'
                .$sHtml
               .'</table>'
@@ -201,7 +192,7 @@ class EmailDomains {
     ** @retval integer
     ** @returns !=0 on error
     **/
-    public function drawSelect(HtmlPage &$Page, &$iIdDomSel, &$sDomSel)
+  /*  public function drawSelect(HtmlPage &$Page, &$iIdDomSel, &$sDomSel)
     {
         $iErr  = 0;
         $sOpts = '';
@@ -213,7 +204,7 @@ class EmailDomains {
                 .'<input type="hidden" name="cmd" value="cmd_setIdDomain" />'
                 .'<table class="InputForm">'
                   .'<tr>'
-                    .'<td class="label">Selected:</td>'
+                    .'<td class="label">Selected domain:</td>'
                     .'<td class="value">'
                       .'<select name="iddomain" onChange="document.domainid_selector.submit();">'
                         .$sOpts
@@ -226,7 +217,7 @@ class EmailDomains {
         )));
 
         return($iErr);
-    }
+    }*/
     /**
     **
     **
@@ -247,8 +238,10 @@ class EmailDomains {
             ." ORDER BY domain.name ASC"
         )));
         else if(0!=($iErr = $this->App->DB->getNumRows($nRows, $rRslt)));
-        else if(0==$nRows) $sHtml .= '<option value="0">No domains available</option>';
-        else while(0==($iErr = $this->App->DB->fetchArray($aRow, $rRslt, MYSQLI_ASSOC)) && NULL!==$aRow){
+        //r1  else if(0==$nRows) $sHtml .= '<option value="0">No domains available</option>';
+        else if(0==$nRows) $sOpts = '<option value="0">No domains available</option>';
+        else while(0==($iErr = $this->App->DB->fetchArray($aRow, $rRslt, MYSQLI_ASSOC)) && NULL!==$aRow)
+        {
             if(0==$iIdDomSel) $iIdDomSel = $aRow['iId'];
             if($iIdDomSel == $aRow['iId']) $sDomSel = $aRow['sName'];
             
@@ -318,25 +311,34 @@ class EmailDomains {
         $iErr = 0;
         $bSuccess = false;
         
-        if(0!=($iErr = $this->App->DB->queryOneRow($aRow, "SELECT name FROM virtual_domains WHERE id=".strval($iId))));
-        else if(NULL==$aRow){
+        if(0!=($iErr = $this->App->DB->queryOneRow($aRow, "SELECT name FROM virtual_domains WHERE id=$iId")));
+        else if(NULL==$aRow)
+        {
             $sMsg = 'No such Domain!';
         }
-        else if(0!=($iErr = $this->App->DB->state("DELETE FROM virtual_domains WHERE id=".strval($iId)))){
+        else if (0 != ($iErr = $this->App->DB->startTransaction())) ;
+        else if (0 != ($iErr = $this->App->DB->state(<<<SQL
+                delete d, u, a 
+                from virtual_domains d
+                    left join virtual_users u on u.domain_id = d.id
+                    left join virtual_aliases a on a.mailbox_id = u.id
+                where d.id = $iId
+            SQL)))
+        {
             lib\ErrLog::getInstance()->push('Could not delete domain "'.$aRow['name'].'", something['.$iErr.'] went wrong!');
         }
+        else if (0 != ($iErr = $this->App->DB->commitTransaction())) ;
         else{
-            $sMsg = 'The domain "'.$aRow['name'].'" and all accounts/aliases associated with it have been deleted.';
+            $sMsg = 'The domain "'.$aRow['name'].'" and all accounts, aliases and redirects associated with it have been deleted.';
             $bSuccess = true;
         }
         return($iErr);
     }
+
     /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
+    * @retval integer
+    * @returns !=0 on error
+    */
     protected function doesDomainExist($sName)
     {
         $bRetVal = false;
@@ -345,12 +347,11 @@ class EmailDomains {
         else $bRetVal = true;
         return($bRetVal);
     }
+
     /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
+    * @retval integer
+    * @returns !=0 on error
+    */
     protected function isValidIdDomain($iId)
     {
         $bRetVal = false;
@@ -359,6 +360,4 @@ class EmailDomains {
         else $bRetVal = true;
         return($bRetVal);
     }
-// ########## METHOD PRIVATE
-};
-?>
+}

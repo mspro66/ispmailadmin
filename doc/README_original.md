@@ -1,7 +1,7 @@
-ISPmail Admin 0.9.8
+# ISPmail Admin 0.9.8
 
-Purpose
-~~~~~~~
+### Purpose
+
 ISPmail Admin allows you to comfortably manage:
 
 - Domains: Add and remove domains (example.com) handled by your mailserver.    
@@ -29,8 +29,8 @@ ISPmail Admin can be configured for one of three types of login:
 - Admin and Users: Only one user will administrate ISPmail Admin but all users
   with an email@account may login and manage aliases for their accounts.
 
-Requirements
-~~~~~~~~~~~~
+### Requirements
+
 If you have setup your mailserver following the guide ISPmail by workaround.org
 you already have at least MySql running on your server. ISPmail Admin is written
 in PHP and therefore needs:
@@ -49,8 +49,8 @@ Additionally you need
 - Javascript and cookies:: The browser you intend to use ISPmail Admin with
   needs Javascript and cookies enabled.
 
-Legal stuff
-~~~~~~~~~~~
+### Legal stuff
+
 ISPmail Admin is "free" as in "Free beer":
 
 - You can use it both privately and commercially for free.
@@ -62,83 +62,86 @@ ISPmail Admin is "free" as in "Free beer":
   Icons by Freepik from www.flaticon.com."
 
 
-Config
-~~~~~~
+### Config
 Edit "cfg/config.inc.php":
-================================================================================
-= /**
-= ** DATABASE ACCESS
-= **/
-= define('IMA_CFG_DB_HOST',     '127.0.0.1');
-= define('IMA_CFG_DB_PORT',     '3306');
-= /// optional, can be faster
-= // define('IMA_CFG_DB_SOCKET',   '/path/to/database.socket');
-= define('IMA_CFG_DB_USER',     'db_user');
-= define('IMA_CFG_DB_PASSWORD', 'db_pass');
-= define('IMA_CFG_DB_DATABASE', 'mailserver');
-= 
-= /**
-= ** ACCESS CONTROL
-= ** uncomment the type you want to use.
-= **/
-= // define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ACCOUNT);  
-= // define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ADM);  
-= // define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ADMAUTO);  
-= 
-= /// Define the administrator's name and password.
-= define('IMA_CFG_ADM_USER',  'admin_user');     // admin username
-= define('IMA_CFG_ADM_PASS',  'admin_Pass');     // admin password
-= 
-= /**
-= ** PASSWORD HASHES
-= ** Enable only *one* of the following
-= **/
-= define('IMA_CFG_USE_BCRYPT_HASHES', true);
-= // define('IMA_CFG_USE_SHA256_HASHES', true);
-= // define('IMA_CFG_USE_MD5_HASHES', true);
-= 
-= /**
-= ** QUOTAS
-= **/
-= /// true or false
-= define('IMA_CFG_USE_QUOTAS', true);
-= /// in bytes. 0 is unlimited, 1GB = 2^30 Bytes = 1073741824
-= define('IMA_CFG_DEFAULT_QUOTA', 0);
-= /// convenience for input field
-= define('IMA_CFG_QUOTA_STEP', 1073741824);
-= /**
-= ** Enable Blacklist
-= **/
-= //define('IMA_SUPPORT_BLACKLIST', true);
-= /**
-= ** GUI
-= ** Spread long lists on multiple pages.
-= ** Set number of maximum entries per page.
-= ** Changes take effect after login/logout.
-= ** If not defined, defaults to 65535.
-= **/
-= // define('IMA_LIST_MAX_ENTRIES', 200);
-================================================================================
+```php
+/**
+ ** DATABASE ACCESS
+ **/
+ define('IMA_CFG_DB_HOST',     '127.0.0.1');
+ define('IMA_CFG_DB_PORT',     '3306');
+ /// optional, can be faster
+ // define('IMA_CFG_DB_SOCKET',   '/path/to/database.socket');
+ define('IMA_CFG_DB_USER',     'db_user');
+ define('IMA_CFG_DB_PASSWORD', 'db_pass');
+ define('IMA_CFG_DB_DATABASE', 'mailserver');
+ 
+ /**
+ ** ACCESS CONTROL
+ ** uncomment the type you want to use.
+ **/
+ // define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ACCOUNT);  
+ // define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ADM);  
+ // define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ADMAUTO);  
+ 
+ /// Define the administrator's name and password.
+ define('IMA_CFG_ADM_USER',  'admin_user');     // admin username
+ define('IMA_CFG_ADM_PASS',  'admin_Pass');     // admin password
+ 
+ /**
+ ** PASSWORD HASHES
+ ** Enable only *one* of the following
+ **/
+ define('IMA_CFG_USE_BCRYPT_HASHES', true);
+ // define('IMA_CFG_USE_SHA256_HASHES', true);
+ // define('IMA_CFG_USE_MD5_HASHES', true);
+ 
+ /**
+ ** QUOTAS
+ **/
+ /// true or false
+ define('IMA_CFG_USE_QUOTAS', true);
+ /// in bytes. 0 is unlimited, 1GB = 2^30 Bytes = 1073741824
+ define('IMA_CFG_DEFAULT_QUOTA', 0);
+ /// convenience for input field
+ define('IMA_CFG_QUOTA_STEP', 1073741824);
+ /**
+  ** Enable Blacklist
+ **/
+ //define('IMA_SUPPORT_BLACKLIST', true);
+ /**
+ ** GUI
+ ** Spread long lists on multiple pages.
+ ** Set number of maximum entries per page.
+ ** Changes take effect after login/logout.
+ ** If not defined, defaults to 65535.
+ **/
+ // define('IMA_LIST_MAX_ENTRIES', 200);
+```
 
-- Add the database table for blacklist (if you enabled IMA_SUPPORT_BLACKLIST) 
-    CREATE TABLE `blacklist_email` (
-    `id` bigint(20) UNSIGNED NOT NULL,
-    `address` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-    `reason` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_nopad_ci;
-    --
-    -- Indexes for table `blacklist_email`
-    --
-    ALTER TABLE `blacklist_email`
-    ADD PRIMARY KEY (`id`),
-    ADD UNIQUE KEY `address` (`address`) USING BTREE;
-    --
-    -- AUTO_INCREMENT for table `blacklist_email`
-    --
-    ALTER TABLE `blacklist_email`
-    MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
-    COMMIT;
-
+- Add the database table for blacklist (if you enabled IMA_SUPPORT_BLACKLIST)
+    > <b>Note:</b> This feature is not included in the "ISPmail Guide", and the author has not provided any guidance for implementing it in your mail server configuration.
+      <br><i>&lt;/mspro66&gt;</i>
+    ```sql   
+      CREATE TABLE `blacklist_email` (
+          `id` bigint(20) UNSIGNED NOT NULL,
+          `address` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+          `reason` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_nopad_ci;
+      --
+      -- Indexes for table `blacklist_email`
+      --
+      ALTER TABLE `blacklist_email`
+          ADD PRIMARY KEY (`id`),
+          ADD UNIQUE KEY `address` (`address`) USING BTREE;
+      --
+      -- AUTO_INCREMENT for table `blacklist_email`
+      --
+      ALTER TABLE `blacklist_email`
+          MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+    
+      COMMIT;
+    ```
 
 - Set the database access information (IMA_CFG_DB_ ...)
 
@@ -146,21 +149,21 @@ Edit "cfg/config.inc.php":
 
 - Set the ISPmail Admin access (login) type by uncommenting (remove the leading
   "//") the line with the method you want to use:
-  * "define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ACCOUNT)":
+  * ```define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ACCOUNT)```:
     Only one user will administrate ISPmail Admin but all users with an email
     account may login (using their password) and manage aliases for their
     accounts.
-  * "define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ADM)":
+  * ```define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ADM)```:
     Only one user will use ISPmail Admin and that is the administrator.
-  * "define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ADMAUTO)":
+  * ```define('IMA_CFG_LOGIN', IMA_LOGINTYPE_ADMAUTO)```:
     Same as above, but when you've protected ISPmail Admin behind a .htaccess
     username and password, another login is not really needed.
 
 - Set the ISPmail Admin administrative user and his password (IMA_CFG_ADM_ ...).
   Use a strong password, yes? Please?
 
-Version History / Changelog
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Version History / Changelog
+~~~
 0.9.11
     Added blacklisting for email address (e.g. "wellknown@spammer.biz") that are
     not allowed to be used (anymore).
@@ -210,3 +213,4 @@ Version History / Changelog
     Minor Bugfixes
 0.9 
     Initial Relase
+~~~

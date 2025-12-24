@@ -1,0 +1,438 @@
+/**
+**
+**
+** @package    ISPmail_Admin
+** @author     Ole Jungclaussen
+** @version    0.9.0
+**/
+body {
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 18px;
+  color: Orange;
+  background-color: White;
+  text-align: center;
+  position: relative;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+a, a:visited, a:active {
+  text-decoration-style: dotted;
+  color: Orange;
+  cursor: pointer;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.page {
+  width: 90%;
+  min-height: 500px;
+  border: 2px solid OrangeRed;
+  border-radius: 5px;
+  padding: 20px;
+  position: relative;
+  display: inline-flex;
+}
+.page table {
+  width: 100%;
+}
+
+.content {
+  position: relative;
+  width: 100%;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.content .top {
+  width: 100%;
+  vertical-align: middle;
+}
+.content .top .logo {
+  width: auto;
+  height: 128px;
+}
+.content .top .title {
+  width: auto;
+  padding: 0 0 10px 20px;
+  text-align: left;
+}
+.content .top table {
+  width: 100%;
+}
+.content .top .menu {
+  position: relative;
+  text-align: center;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  border: 0 solid OrangeRed;
+  border-radius: 10px;
+  padding: 3px 10px;
+  vertical-align: middle;
+}
+.content .top .menu button {
+  background-color: darkgoldenrod;
+  padding: 5px;
+  margin-right: 20px;
+  min-width: 100px;
+  min-height: 35px;
+  border: none;
+  vertical-align: middle;
+  color: azure;
+  font-weight: bold;
+  cursor: pointer;
+}
+.content .top .menu button:hover {
+  background-color: chocolate;
+}
+.content .top .menu button:hover:has(img) {
+  background-color: White;
+}
+.content .top .menu button:has(img) {
+  background-color: White;
+}
+.content .top .menu button img {
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+}
+.content .middle {
+  position: relative;
+  text-align: left;
+  margin-top: 5px;
+}
+.content .middle table td {
+  vertical-align: top;
+}
+.content .middle table col.left {
+  width: 70%;
+  padding-right: 10px;
+}
+.content .middle table col.right {
+  width: 30%;
+}
+.content .middle .help {
+  border: 1px solid OrangeRed;
+  border-radius: 10px;
+  padding: 0;
+  background-color: LemonChiffon;
+  text-align: left;
+  vertical-align: top;
+  font-size: 16px;
+  margin-left: 10px;
+}
+.content .middle .help ul {
+  margin-top: 15px;
+  padding-right: 15px;
+}
+.content .middle .help ul li {
+  margin-bottom: 5px;
+}
+.content .middle .help .Heading {
+  padding: 15px 15px 0;
+}
+.content .middle h2 {
+  margin: 0 0 20px;
+  border: 1px solid OrangeRed;
+  border-radius: 5px;
+  padding: 2px 2px 2px 5px;
+  background-color: Gold;
+  color: chocolate;
+  font-size: 24px;
+}
+.content .middle h3 {
+  margin: 0 0 10px;
+  border: 1px solid OrangeRed;
+  border-radius: 5px;
+  padding: 2px 2px 2px 5px;
+  color: Orange;
+  font-size: 16px;
+}
+.content .domainSelector {
+  text-align: left;
+  min-height: 50px;
+  padding: 15px 10px 10px;
+  vertical-align: middle;
+  display: table-cell;
+}
+.content .domainSelector span {
+  font-weight: bold;
+}
+.content .domainSelector select {
+  color: brown;
+  font-weight: bold;
+  font-size: large;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 4px 7px;
+  outline: 0;
+}
+
+div#page_footer {
+  position: relative;
+  display: inline-table;
+  width: 90%;
+  background-color: #FFFFFF;
+  text-align: right;
+  font-size: 11px;
+  left: 0;
+  margin: 3px auto 0;
+}
+
+/**
+** #########################################################
+** LEVEL 3: ELEMENTS
+**/
+/*
+* ----------------------------------------------------------
+* LISTING PAGE NAVIGATION
+*/
+div.DatabaseListPages {
+  text-align: right;
+  font-weight: normal;
+}
+
+span.DatabaseListPages {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+span.DatabaseListPages[data-ondsp="1"] {
+  cursor: default;
+  text-decoration: none;
+  font-weight: bold;
+  color: #468CFF;
+}
+
+/*****************************************************
+              GRID TABLE LISTING
+*****************************************************/
+.listgrid {
+  color: Orange;
+  font-size: 16px;
+}
+.listgrid table.inside {
+  width: 100%;
+  border-collapse: collapse;
+  border: 0;
+}
+.listgrid table.inside td {
+  border: 0;
+}
+.listgrid table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid orange;
+  border-radius: 5px;
+}
+.listgrid table img {
+  height: 16px;
+  width: 16px;
+  cursor: pointer;
+}
+.listgrid table.icon {
+  width: 25px;
+  text-align: center;
+  vertical-align: top;
+  padding: 5px 7px 2px 7px;
+}
+.listgrid table th {
+  background-color: purple;
+  padding: 2px 4px 2px 4px;
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid orange;
+}
+.listgrid table td {
+  padding: 5px 4px 2px 4px;
+  vertical-align: top;
+  text-align: left;
+  border-bottom: 1px solid orange;
+}
+.listgrid table td button {
+  max-height: 25px;
+  border: 1px dotted orange;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.listgrid table td.num {
+  text-align: right;
+}
+.listgrid table td.list {
+  font-size: 12px;
+}
+.listgrid table td.enfasi {
+  font-size: 17px;
+  vertical-align: top;
+}
+.listgrid input[type=text], .listgrid div.DatabaseList input[type=password], .listgrid div.DatabaseList input[type=number] {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 12px;
+  padding: 4px 7px;
+  outline: 0;
+  width: 275px;
+}
+.listgrid input:focus {
+  border-color: orange;
+}
+.listgrid a {
+  margin-left: 3px;
+  border-radius: 5px;
+  padding: 2px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/*******************************
+         MSGBOX
+********************************/
+div.MsgSuccess, div.MsgError {
+  border-radius: 3px;
+  width: 70%;
+  min-height: 30px;
+  margin: 0 auto 10px auto;
+  padding: 10px 10px 10px 55px;
+  background-repeat: no-repeat;
+  background-position: 10px 10px;
+  background-color: #FFFFFF;
+  color: #343436;
+}
+
+div.MsgSuccess {
+  background-image: url("../img/success.png");
+  border: 2px solid #0F0;
+}
+
+div.MsgError {
+  background-image: url("../img/error.png");
+  border: 2px solid #F00;
+}
+
+ul.Msg {
+  margin: 0;
+}
+
+ul.Msg li {
+  margin: 0;
+}
+
+input:focus {
+  border-color: #468CFF;
+}
+
+/**************************************************
+             INPUT FORM / FIELDS
+***************************************************/
+.inputform {
+  margin: auto;
+  font-size: 15px;
+}
+.inputform table {
+  margin-bottom: 20px;
+  width: auto;
+}
+.inputform td {
+  border: 0 solid black;
+  padding: 0 0 5px;
+  vertical-align: middle;
+  text-align: left;
+}
+.inputform td.label {
+  padding-right: 5px;
+}
+.inputform td.to_left {
+  text-align: left;
+  padding-left: 10px;
+}
+.inputform input[type=text], .inputform input[type=password], .inputform input[type=number] {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 4px 7px;
+  outline: 0;
+  width: 275px;
+}
+.inputform input.readonly {
+  background-color: #EEEEEE;
+  color: #AAAAAA;
+}
+.inputform input:focus {
+  border-color: #468CFF;
+}
+.inputform button {
+  background-color: Gold;
+  color: brown;
+  min-width: 100px;
+  min-height: 25px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+.inputform select {
+  color: brown;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 15px;
+  padding: 4px 7px;
+  outline: 0;
+  width: 275px;
+}
+
+/***********************************************
+                 LOGIN FORM
+************************************************/
+.login_form {
+  margin: auto;
+}
+.login_form table {
+  border-collapse: collapse;
+  padding: 0;
+}
+.login_form table td {
+  border: 0;
+  padding: 0 0 5px;
+  font-size: 15px;
+  vertical-align: middle;
+  text-align: center;
+}
+.login_form form {
+  margin: auto;
+  border: 2px solid #f44343;
+  border-radius: 5px;
+  background-color: gold;
+  width: 300px;
+  height: 170px;
+  padding: 30px 10px 10px;
+}
+.login_form form input {
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 20px;
+  padding: 4px 7px;
+  outline: 0;
+  width: 284px;
+}
+.login_form form input[type=submit] {
+  min-height: 30px;
+  margin-top: 20px;
+  border: 1px solid dimgray;
+  border-radius: 5px;
+  padding: 2px 2px 2px 5px;
+  background-color: lightgray;
+  color: grey;
+  font-size: 18px;
+  cursor: pointer;
+}
+.login_form form input:focus {
+  border-color: #f44343;
+}
+
+
+
+/*# sourceMappingURL=isp.css.map */

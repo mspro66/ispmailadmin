@@ -1,7 +1,5 @@
 <?php
 /**
- **
- **
  ** @package    ISPmail_Admin
  ** @author     Ole Jungclaussen
  ** @version    0.9.0
@@ -24,4 +22,3 @@ else if (0 != ($iErr = $App->drawPage()))
 // FINALIZE
 $App->sendPage($iErr);
 $App->endScript();
-?>

@@ -1,411 +1,466 @@
 <?php
 /**
-**
-**
-** @package    ISPmail_Admin
-** @author     Ole Jungclaussen
-** @version    0.9.0
-**/
+ **
+ **
+ ** @package    ISPmail_Admin
+ ** @author     Ole Jungclaussen
+ ** @version    0.9.0
+ **/
+
 /**
-** @public
-**/
-class EmailRedirects {
-// ########## PROPS PUBLIC
-    /**
-    **
-    ** @type IspMailAdminApp
-    **/
-    public $App = false;
-    /**
-    **
-    ** @type array
-    **/
-    public $aStat = null;
-// ########## PROPS PROTECTED
-    /**
-    **
-    ** @type EmailDomains
-    **/
-    protected $EDom = false;
-// ########## PROPS PRIVATE
-    private $sLastSrc = '';
-    private $sLastTar = '';
-    private $iIdLastDom = 0;
+ ** @public
+ **/
+class EmailRedirects
+{
+   /**
+    * @type false|IspMailAdminApp Reference to Main app obj
+    */
+   public $App = false;
+
+   /**
+    * @type array
+    */
+   public $aStat = null;
+
+   /**
+    * @var string ID of mailbox that own domain-redirects
+    */
+   public $idCurrentMboxOwner;
+
+   /**
+    * @var string Name of current mailbox owner of domain redirects
+    */
+   public $nameCurrentMboxOwner;
+
+   /**
+    * @var false|EmailDomains Reference to Domain obj
+    */
+   protected $EDom = false;
+
+   private $sLastSrc = '';
+   private $sLastTar = '';
+   private $iIdLastDom = 0;
+
 // ########## CONST/DEST
-    function __construct(IspMailAdminApp &$App, EmailDomains &$EDom)
-    {
-        $this->App  = &$App;
-        $this->aStat = &$App->aRedStat;
-        $this->EDom = &$EDom;
-    }
-    function __destruct()
-    {
-        
-    }
+
+   function __construct (IspMailAdminApp &$App, EmailDomains &$EDom)
+   {
+      $this->App   = &$App;
+      $this->aStat = &$App->aRedStat;
+      $this->EDom  = &$EDom;
+   }
+
+
 // ########## METHOD PUBLIC
-    /**
+
+   /**
     **
     **
     ** @retval integer
     ** @returns !=0 on error
     **/
-    public function setTitleAndHelp(HtmlPage &$Page)
-    {
-        $this->App->Page->setTitle('Redirects');
-        $this->App->Page->setHelp(
-            '<div class="Heading">Manage redirects from a locally accepted email-address to any other email-address (forward emails for <i>somebody@example.com</i> to <i>somebody.else@over.there.com</i></div>'
-            .'<ul>'
-            .'<li>Create a redirect: Enter the source email-address and click "Create"</li>'
-            .'<li>Delete a redirect: Click on <img class="icon" src="./img/trash.png" alt="delete icon" /></li>'
-            .'<li><b>Note</b>: You can redirect an existing account.</li>'
-            .'<li><b>Note</b>: E&ndash;mails addressed to a deleted redirects will be rejected by the mailserver &ndash; unless you\'ve a "catchall"&ndash;account.</li>'
-            .'</ul>'
-        );
-        return(0);
-    }
-    /**
+   public function setTitleAndHelp (HtmlPage &$Page)
+   {
+      $this->App->Page->setTitle('Domain Redirects');
+      $this->App->Page->setHelp(<<<HTM
+        <div class="Heading">
+            Manage redirects from a local virtual mail-box to any other email-address 
+            (forward emails for <i>somelocalvirtualaddress@<b>{$this->App->sDomSel}</b></b></i> to <i>somebody.else@over.there.com</i>)
+         </div>
+         <ul>
+             <li>Create a redirect: entering a virtual mail-box name, an email destination address and click "Create"</li>
+             <li>Add another destination: make click on <img class="icon" style="height: 20px" src="./img/envelope-plus.png" alt="delete icon" />
+                 and insert an email destination address and click "Create"</li>
+             <li>Delete a redirect: make click on <img class="icon" style="height: 20px" src="./img/trash.png" alt="adddelete icon" /></li>
+             <li><b>Note</b>: E-mails addressed to a deleted redirects will be rejected by the mailserver &ndash; unless you've a "catchall" account.</li>'
+         </ul>
+      HTM );
+
+      /*
+       <li><b>Note</b>: You can redirect an existing account.</li>
+      */
+      return (0);
+   }
+
+   /**
     **
     **
     ** @retval integer
     ** @returns !=0 on error
     **/
-    public function processCmd()
-    {
-        $iErr = 0;
-        if(!isset($this->App->aReqParam['cmd']));
-        else switch($this->App->aReqParam['cmd']){
-            case 'cmd_create':
-                $bSuccess = false;
-                
-                if(!isset($this->App->aReqParam['ssrc']));
-                else if(0==strlen($this->sLastSrc = trim($this->App->aReqParam['ssrc'])));
-                else if(!isset($this->App->aReqParam['iiddomain']));
-                else if(0>=($this->iIdLastDom = intval($this->App->aReqParam['iiddomain'])));
-                else if(!isset($this->App->aReqParam['star']));
-                else if(0==strlen($this->sLastTar = trim($this->App->aReqParam['star'])));
-                else if(0!=($iErr = $this->create($sMsg, $bSuccess, $this->sLastSrc, $this->sLastTar, $this->iIdLastDom)));
-                else $this->App->Page->drawMsg(!$bSuccess, $sMsg);
+   public function processCmd ()
+   {
+      $iErr = 0;
+      if (!isset($this->App->aReqParam['cmd'])) ;
+      else switch ($this->App->aReqParam['cmd'])
+      {
+         case 'cmd_create':
+            $bSuccess = false;
 
-                // clear fields on success
-                if($bSuccess){
-                    $this->sLastSrc = '';
-                    $this->sLastTar = '';
-                }
-                break;
-                
-            case 'cmd_delete':
-                $bSuccess = false;
-                
-                if(!isset($this->App->aReqParam['idredirect']));
-                else if(0>=($iIdRedirect = intval($this->App->aReqParam['idredirect'])));
-                else if(0!=($iErr = $this->delete($sMsg, $bSuccess, $iIdRedirect)));
-                else $this->App->Page->drawMsg(!$bSuccess, $sMsg);
-                break;
+            if (!isset($this->App->aReqParam['ssrc'])) ;
+            else if (0 == strlen($this->sLastSrc = trim($this->App->aReqParam['ssrc']))) ;
+            /*else if (!isset($this->App->aReqParam['iiddomain'])) ;
+            else if (0 >= ($this->iIdLastDom = intval($this->App->aReqParam['iiddomain']))) ;*/
+            else if (!isset($this->App->aReqParam['star'])) ;
+            else if (0 == strlen($this->sLastTar = trim($this->App->aReqParam['star']))) ;
+            else if (0 != ($iErr = $this->create($sMsg, $bSuccess, $this->sLastSrc, $this->sLastTar))) ;
+            else $this->App->Page->drawMsg(!$bSuccess, $sMsg);
 
-            case 'cmd_listpage':
-                $this->aStat['iIdxPage'] = $this->App->aReqParam['idxpage'];
-                break;
+            // clear fields on success
+            if ($bSuccess)
+            {
+               $this->sLastSrc = '';
+               $this->sLastTar = '';
+            }
+            break;
 
-            default:
-                break;
-        }
-        return($iErr);
-    }
-    /**
+         case 'cmd_delete':
+            $bSuccess = false;
+
+            if (!isset($this->App->aReqParam['idredirect'])) ;
+            else if (0 >= ($iIdRedirect = intval($this->App->aReqParam['idredirect']))) ;
+            else if (0 != ($iErr = $this->delete($sMsg, $bSuccess, $iIdRedirect))) ;
+            else $this->App->Page->drawMsg(!$bSuccess, $sMsg);
+            break;
+
+         case 'cmd_listpage':
+            $this->aStat['iIdxPage'] = $this->App->aReqParam['idxpage'];
+            break;
+
+         default:
+            break;
+      }
+      return ($iErr);
+   }
+
+   /**
     **
     **
     ** @retval integer
     ** @returns !=0 on error
     **/
-    public function drawCreate(HtmlPage &$Page)
-    {
-        $sDomOpts  = '';
-        $sDomSel   = '';
-        
-        if(0!=($iErr = $this->EDom->getSelectOpts($sDomOpts, $this->iIdLastDom, $sDomSel)));
-        else return($Page->addBody(
-            '<h3>Create new</h3>'
-            .'<div class="InputForm">'
-              .'<form id="create_redirect" name="create_redirect" action="'.$_SERVER['PHP_SELF'].'" method="POST">'
-                .'<input type="hidden" name="cmd" value="cmd_create" />'
-                .'<table class="InputForm">'
-                  .'<tr>'
-                    .'<td class="label">Source:</td>'
-                    .'<td class="value">'
-                      .'<input type="text" name="ssrc" id="redirect_src" placeholder="name" value="'.$this->sLastSrc.'">'
-                      .'@<select name="iiddomain">'
-                        .$sDomOpts
-                      .'</select>'
-                    .'</td>'
-                  .'</tr>'
-                  .'<tr>'
-                    .'<td class="label">Destination:</td>'
-                    .'<td class="value">'
-                      .'<input type="text" name="star" placeholder="account@somewhere.else.com" value="'.$this->sLastTar.'">'
-                    .'</td>'
-                  .'</tr>'
-                  .'<tr>'
-                    .'<td class="label">&nbsp;</td>'
-                    .'<td class="submit">'
-                      .'<a class="button" onClick=" verifyCreateRedirect(document.create_redirect);">Create</a>'
-                    .'</td>'
-                  .'</tr>'
-                .'</table>'
-              .'</form>'
-            .'</div>'
-        ));
-    }
-    /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
-    public function drawList(HtmlPage &$Page)
-    {
-        $iErr     = 0;
-        $sHtml    = '';
-        $aSources = array();
-        $nEntries=0;
-        
-        if(0!=($iErr = $this->App->DB->queryOneRow($aRow,
-            "SELECT"
-            ." COUNT(redir.id) AS nCnt"
-            ." FROM virtual_aliases AS redir"
-            ." LEFT JOIN virtual_users AS user ON(redir.destination=user.email)"
-            ." WHERE ".$this->App->DB->sqlISNULL('user.id')
-        )));
-        else if(null===$aRow);
-        else if(0!=($iErr = lib\checkListPages($this->aStat, ($nEntries = $aRow['nCnt']))));
-        
-        if(0!=($iErr = $this->App->DB->query($rRslt,
-            "SELECT"
-            ." redir.id AS iId"
-            .",redir.source AS sSrc"
-            .",redir.destination AS sTar"
-            .",(SELECT"
-                ." COUNT(alias.id)"
-                ." FROM virtual_aliases as alias"
-                ." LEFT JOIN virtual_users AS user ON(user.email=alias.destination)"
-                ." WHERE"
-                ." alias.source=redir.source"
-                ." AND NOT ".$this->App->DB->sqlISNULL('user.id')
-            .") AS nAliases"
-            ." FROM virtual_aliases AS redir"
-            ." LEFT JOIN virtual_users AS user ON(redir.destination=user.email)"
-            ." WHERE ".$this->App->DB->sqlISNULL('user.id')
-            ." ORDER BY sSrc, sTar ASC"
-            .lib\makeListPagesSqlLimit($this->aStat)
-        ))); 
-        else if(0!=($iErr = $this->App->DB->getNumRows($nRows, $rRslt)));
-        else if(0==$nRows) $sHtml .= '<tr class=""><td class="" colspan="6">No redirects created yet</td></tr>';
-        else while(0==($iErr = $this->App->DB->fetchArray($aRow, $rRslt, MYSQLI_ASSOC)) && NULL!==$aRow){
-            $aSources[$aRow['sSrc']][$aRow['sTar']] = $aRow['iId'];
-            $aAliases[$aRow['sSrc']] = $aRow['nAliases'];
-        }
-        
-        foreach($aSources as $sSrc => $aTar){
-            $aAliasTar = array();
-            $sHtmlTars  = '';
-            
-            if(0!=$aAliases[$sSrc] && 0!=($iErr = $this->getAliasTargets($aAliasTar, $sSrc)));
-            else foreach($aTar as $sTar => $iId) $sHtmlTars .= 
-                    '<tr>'
-                      .'<td class="icon">'
-                        .'<form name="delete_redirect_'.strval($iId).'" action="'.$_SERVER['PHP_SELF'].'" method="POST">'
-                          .'<input type="hidden" name="cmd" value="cmd_delete" />'
-                          .'<input type="hidden" name="idredirect" value="'.strval($iId).'" />'
-                          .'<img class="icon" src="./img/trash.png" onClick="confirmDeleteRedirect(document.delete_redirect_'.strval($iId).', \''.$sSrc.'\', \''.$sTar.'\');" alt="icon delete"/>'
-                        .'</form>'
-                      .'</td>'
-                      .'<td class="">'.$sTar.'</td>'
-                    .'</tr>'
-            ;
-            
-            $sHtml .= 
-                '<tr>'
-                  .'<td class="">'.$sSrc.'</td>'
-                  .'<td class="">'
-                    .'<table class="DatabaseListSub1">'
-                      .$sHtmlTars
-                    .'</table>'
-                   .'</td>'
-                   .'<td class="list">'.implode('<br />',$aAliasTar).'</td>'
-                .'</tr>'
-            ;
-        }
+   protected function create (&$sMsg, &$bSuccess, $newRedirect, $sTar)
+   {
+      $iErr     = 0;
+      $bSuccess = false;
 
-        if(0!=$iErr);
-        else if(0!=($iErr = $Page->addBody(
-            '<h3>Existing Redirects</h3>'
-            .'<div class="DatabaseList">'
-              .lib\makeListPages($this->aStat, $nEntries, 'Alias_ListPage')
-              .'<table class="DatabaseList">'
-                .'<colgroup><col width="*"><col width="40%"><col width="10%"></colgroup>'
-                .'<tr>'
-                  .'<th>Source</th>'
-                  .'<th>Destination</th>'
-                  .'<th>Also&nbsp;alias&nbsp;of</th>'
-                .'</tr>'
-                .$sHtml
-              .'</table>'
-            .'</div>'
-        )));
-        
-        return($iErr);
-    }
+      $newRedirectAddr = "$newRedirect@{$this->App->sDomSel}";
+      $aliasesFound    = [];
+      $targetsFound    = [];
+
+      //verify if proposed redirect is already present as mailbox
+      if ($this->App->existsMailboxName($newRedirectAddr))
+      {
+         $sMsg .= "The redirect '$newRedirectAddr' is invalid, already exists a mailbox with some name!";
+      }
+      else if (! filter_var($newRedirectAddr, FILTER_VALIDATE_EMAIL))
+      {
+         $sMsg = 'The new redirect address is invalid!';
+      }
+      else if (! filter_var($sTar, FILTER_VALIDATE_EMAIL))
+      {
+         $sMsg = 'The new destination address is invalid!';
+      }//verify if this alias exist, owned by user mailboxes or domain redirect
+      else if (0 != ($iErr = $this->App->getExistingAliases($aliasesFound, $newRedirectAddr, $this->idCurrentMboxOwner))) ;
+      else if (!empty($aliasesFound))
+      {
+         $sMsg       .= "The redirect '$newRedirectAddr' is already used in:  ";
+         $firstCicle = true;
+         foreach ($aliasesFound as $mboxOwner)
+         {
+            if (!$firstCicle)
+               $sMsg .= ", ";
+
+            if (substr($mboxOwner['mailbox'], 0, 1) == '@')
+               $sMsg .= "Domain redirect";
+            else
+               $sMsg .= "mailbox {$mboxOwner['mailbox']}";
+
+            $firstCicle = false;
+         }
+      }
+      //verify existing target for this alias
+      else if (0 != ($iErr = $this->App->getExistingTargets($targetsFound, $newRedirectAddr, $this->idCurrentMboxOwner))) ;
+      else if (!empty($targetsFound) && in_array($sTar, $targetsFound))
+      {
+         $sMsg .= "Redirect '$newRedirectAddr' exists and target '$sTar', already is in!'";
+      }
+      else if (!$this->App->verifyEmailIsBlacklisted($sMsg, $newRedirectAddr)) ;
+      else if (0 != ($iErr = $this->App->DB->state(<<<SQL
+            INSERT INTO virtual_aliases 
+                (domain_id, mailbox_id, source, destination) 
+            VALUES (
+                {$this->App->iIdDomSel},
+                {$this->idCurrentMboxOwner},
+                '{$this->App->DB->realEscapeString($newRedirectAddr)}',
+                '{$this->App->DB->realEscapeString($sTar)}'
+            )
+         SQL
+         )))
+      {
+         lib\ErrLog::getInstance()->push("Could not create redirect '$newRedirectAddr' to '$sTar', something [$iErr] went wrong!");
+      }
+      else
+      {
+         $sMsg     = "Redirect '$newRedirectAddr' to {$sTar} has been created.";
+         $bSuccess = true;
+      }
+
+      return ($iErr);
+   }
+
+   /**
+    *
+    * @retval integer
+    * @returns !=0 on error
+    */
+   protected function delete (&$sMsg, &$bSuccess, $iId)
+   {
+      $iErr     = 0;
+      $bSuccess = false;
+
+      if (0 != ($iErr = $this->App->DB->queryOneRow($aRow, <<<SQL
+            SELECT 
+                source, 
+                destination,
+                (select count(*) from virtual_aliases where mailbox_id=m.mailbox_id and source=m.source) as numdest
+            FROM virtual_aliases m WHERE id=$iId
+        SQL))) ;
+      else if (NULL == $aRow) $sMsg = 'No such redirect!';
+      else if (0 != ($iErr = $this->App->DB->state("DELETE FROM virtual_aliases WHERE id=" . strval($iId))))
+      {
+         lib\ErrLog::getInstance()->push('Could not delete redirect "' . $aRow['source'] . '", something[' . $iErr . '] went wrong!');
+      }
+      else
+      {
+         if (intval($aRow['numdest']) > 1)
+            $sMsg = "The destination '{$aRow['destination']}' of redirect '{$aRow['source']}', has been deleted.";
+         else
+            $sMsg = "The redirect '{$aRow['source']}' of domain {$this->App->sDomSel}, has been deleted.";
+
+         $bSuccess = true;
+      }
+
+      return ($iErr);
+   }
+
 // ########## METHOD PROTECTED
-    /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
-    function getAliasTargets(&$aAliasTar, $sAlias)
-    {
-        $iErr      = 0;
-        $aAliasTar = array();
-        
-        if(0!=($iErr = $this->App->DB->query($rRslt,
-            "SELECT"
-            ." alias.destination AS sTar"
-            ." FROM virtual_aliases AS alias"
-            ." LEFT JOIN virtual_users AS user ON(user.email=alias.destination)"
-            ." WHERE"
-            ." alias.source='".$this->App->DB->realEscapeString($sAlias)."'"
-            ." AND NOT ".$this->App->DB->sqlISNULL('user.id')
-        ))); 
-        else if(0!=($iErr = $this->App->DB->getNumRows($nRows, $rRslt)));
-        else if(0==$nRows);
-        else while(0==($iErr = $this->App->DB->fetchArray($aRow, $rRslt, MYSQLI_ASSOC)) && NULL!==$aRow){
-            $aAliasTar[] = $aRow['sTar'];
-        }
-        return($iErr);
-    }
-    /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
-    protected function create(&$sMsg, &$bSuccess, $sSrc, $sTar, $iIdDomain)
-    {
-        $iErr = 0;
-        $bSuccess = false;
-        
-        
-        if(0!=($iErr = $this->EDom->getDomainName($sDomain, $iIdDomain)));
-        else if(0==strlen($sDomain)){
-            $sMsg .= 'Invalid Domain['.$iIdDomain.']';
-        }
-        else if(false===($sSrcFull = $sSrc.'@'.$sDomain));
-        /*
-        else if($this->doesRedirectExist($sChkTar, $sSrcFull)){
-            $sMsg .= 'Source "'.$sSrcFull.'" already exists as redirect/alias of "'.$sChkTar.'"';
-        }
-        */
-        else if(0!=($iErr = $this->getExistingTargets($aTar, $sSrcFull)));
-        else if($this->isLocalAccount($sTar)){
-            $sMsg .= 'Destination "'.$sTar.'" is a local account.<br />Please use the "Alias"-Page to create aliases.';
-        }
-        else if($this->doesRedirectExist($sChkTar, $sTar)){
-            $sMsg .= 'Destination "'.$sTar.'" is in itself already a redirect/alias of "'.$sChkTar.'"';
-        }
-        else if(in_array($sTar, $aTar)){
-            $sMsg .= '"'.$sSrcFull.'" already exists as alias/redirect of "'.$sTar.'"';
-        }
-        else if(!$this->App->verifyEmailAddress($sMsg, $sSrcFull));
-        else if(0!=($iErr = $this->App->DB->state(
-            // reminder: this has to work with SQLite (IMA-Demo), too
-            // - SQLite3 doesn't know the "INSERT ... SET" Syntax
-            "INSERT INTO virtual_aliases (domain_id, source, destination) VALUES ("
-              .strval($iIdDomain)
-              .",'".$this->App->DB->realEscapeString($sSrcFull)."'"
-              .",'".$this->App->DB->realEscapeString($sTar)."'"
-            .")"
-        ))){
-            lib\ErrLog::getInstance()->push('Could not create redirect "'.$sSrcFull.'" to "'.$sTar.'", something['.$iErr.'] went wrong!');
-        }
-        else{
-            $sMsg = 'Redirect "'.$sSrcFull.'" to "'.$sTar.'" has been created.';
-            if(0!=count($aTar)) $sMsg .= '<br /><br /><b>Note</b>: This redirect is also an alias/redirect of <ul class="Msg"><li>'.implode('</li><li>', $aTar).'</li></ul>';
-            $bSuccess = true;
-        }
 
-        return($iErr);
-    }
-    /**
+   /**
     **
     **
     ** @retval integer
     ** @returns !=0 on error
     **/
-    protected function delete(&$sMsg, &$bSuccess, $iId)
-    {
-        $iErr = 0;
-        $bSuccess = false;
-        
-        if(0!=($iErr = $this->App->DB->queryOneRow($aRow, "SELECT source, destination FROM virtual_aliases WHERE id=".strval($iId))));
-        else if(NULL==$aRow) $sMsg = 'No such redirect!';
-        else if(0!=($iErr = $this->App->DB->state("DELETE FROM virtual_aliases WHERE id=".strval($iId)))){
-            lib\ErrLog::getInstance()->push('Could not delete redirect "'.$aRow['source'].'", something['.$iErr.'] went wrong!');
-        }
-        else{
-            $sMsg = 'The redirect "'.$aRow['source'].'" of "'.$aRow['destination'].'" has been deleted.';
-            $bSuccess = true;
-        }
-        
-        return($iErr);
-    }
-    /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
-    protected function getExistingTargets(&$aTar, $sSrc)
-    {
-        $iErr = 0;
-        $aTar = array();
-        if(0!=($iErr = $this->App->DB->query($rRslt, "SELECT destination as sTar FROM virtual_aliases WHERE source='".$this->App->DB->realEscapeString($sSrc)."'")));
-        else if(0!=($iErr = $this->App->DB->getNumRows($nRows, $rRslt)));
-        else if(0==$nRows);
-        else while(0==($iErr = $this->App->DB->fetchArray($aRow, $rRslt, MYSQLI_ASSOC)) && NULL!==$aRow){
-            $aTar[] = $aRow['sTar'];
-        }
-        return($iErr);
-    }
-    /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
-    protected function doesRedirectExist(&$sTar, $sSrc)
-    {
-        $bRetVal = false;
-        if(0!=($iErr = $this->App->DB->queryOneRow($aRow, "SELECT destination as sTar FROM virtual_aliases WHERE source='".$this->App->DB->realEscapeString($sSrc)."'")));
-        else if(NULL===$aRow);
-        else{
-            $sTar = $aRow['sTar'];
-            $bRetVal = true;
-        }
-        return($bRetVal);
-    }
-    /**
-    **
-    **
-    ** @retval integer
-    ** @returns !=0 on error
-    **/
-    protected function isLocalAccount($sEmail)
-    {
-        $bRetVal = false;
-        if(0!=($iErr = $this->App->DB->queryOneRow($aRow, "SELECT id FROM virtual_users WHERE email='".$this->App->DB->realEscapeString($sEmail)."'")));
-        else if(NULL===$aRow);
-        else $bRetVal = true;
-        return($bRetVal);
-    }
-// ########## METHOD PRIVATE
-};
-?>
+   public function drawCreate (HtmlPage &$Page)
+   {
+      $sDomOpts = '';
+      $sDomSel  = '';
+
+      if (0 != ($iErr = $this->EDom->getSelectOpts($sDomOpts, $this->iIdLastDom, $sDomSel))) ;
+      else return ($Page->addBody(
+         '<h3>Create new</h3>'
+         . '<div class="inputform">'
+         . '<form id="create_redirect" name="create_redirect" action="' . $_SERVER['PHP_SELF'] . '" method="POST">'
+         . '<input type="hidden" name="cmd" value="cmd_create" />'
+         . '<table>'
+         . '<tr>'
+         . '<td class="label">Virtual mailbox:</td>'
+         . '<td class="value">'
+         . '<input type="text" name="ssrc" id="redirect_src" placeholder="Place a mailbox address" value="' . $this->sLastSrc . '" style="text-align: right">'
+         . "@" . $this->App->sDomSel
+         /*.'@<select name="iiddomain">'
+         .$sDomOpts
+       .'</select>'*/
+         . '</td>'
+         . '</tr>'
+         . '<tr>'
+         . '<td class="label">Destination email:</td>'
+         . '<td class="value">'
+         . '<input type="text" name="star" placeholder="place an email address" value="' . $this->sLastTar . '">'
+         . '</td>'
+         . '</tr>'
+         . '<tr>'
+         . '<td class="label">&nbsp;</td>'
+         . '<td class="submit">'
+         . '<button onClick="return verifyCreateRedirect(document.create_redirect);">Create</button>'
+         . '&nbsp;<button id="breset" style="visibility:hidden; background-color: #cccccc" onClick="resetRedirectForm();">Cancel</button>'
+         . '</td>'
+         . '</tr>'
+         . '</table>'
+         . '</form>'
+         . '</div>'
+      ));
+   }
+
+   /**
+    *
+    * @param string $redirUserId
+    * @param string $redirUserName
+    * @param int $idCurrentDomain
+    * @return int
+    */
+   public function getUserIdOwnerRedirects (&$redirUserId, &$redirUserName, $idCurrentDomain): int
+   {
+      if ($this->App->DB->queryOneRow($aRow, <<<SQL
+            select id, email
+            from virtual_users
+            where 
+                domain_id = {$idCurrentDomain}
+                and substring(email,1,1) = "@"
+         SQL
+         ) != 0)
+      {
+         lib\ErrLog::getInstance()->push(__METHOD__ . ": query error.");
+         return 1;
+      }
+
+      if ($aRow !== null)
+      {
+         $redirUserId   = $aRow['id'];
+         $redirUserName = $aRow['email'];
+
+         return 0;
+      }
+      elseif ($idCurrentDomain > 0)
+      {
+         //create mbox owner of domain redirect
+         if ($this->createMboxRedirectOwner($idCurrentDomain) == 0)
+            return $this->getUserIdOwnerRedirects ($redirUserId, $redirUserName, $idCurrentDomain);
+      }
+
+      return 1;
+   }
+
+   function createMboxRedirectOwner ($domainID)
+   {
+      $domName = "";
+      if ($this->EDom->getDomainName($domName, $domainID) != 0)
+         return 1;
+
+      if ($this->App->DB->state(<<<SQL
+            insert into virtual_users (domain_id, email, password)   
+            values ($domainID, "@$domName", "~")
+         SQL) != 0)
+      {
+         return 1;
+      }
+
+      return 0;
+   }
+
+   public function drawList (HtmlPage &$Page)
+   {
+      $iErr  = 0;
+      $sHtml = '';
+      //$aSources = array();
+      $nEntries = 0;
+
+      //count record for paging
+      if (0 != ($iErr = $this->App->DB->queryOneRow($aRow, <<<SQL
+            select count(*) as nCnt
+            from virtual_aliases
+            where mailbox_id = {$this->idCurrentMboxOwner};
+         SQL
+         ))) ;
+      else if (null === $aRow) ;
+      else if (0 != ($iErr = lib\checkListPages($this->aStat, ($nEntries = $aRow['nCnt'])))) ;
+
+      //read redirects rows
+      $sqlLimit = lib\makeListPagesSqlLimit($this->aStat);
+      if (0 != ($iErr = $this->App->DB->query($dbResultSet, <<<SQL
+                select * 
+                from virtual_aliases
+                where
+                    mailbox_id = '{$this->idCurrentMboxOwner}'
+                    $sqlLimit
+                order by source
+            SQL
+         ))) ;
+      else if (0 != ($iErr = $this->App->DB->getNumRows($nRows, $dbResultSet))) ;
+      else if (0 == $nRows) $sHtml .= '<tr class=""><td class="" colspan="6">No redirects created yet</td></tr>';
+      else
+      {
+         $htmRedirOpen = function ($redirect) {
+            return <<<HTM
+               <tr>
+                 <td class="icon">
+                     <img src="./img/envelope-plus.png" onClick="addNewDestinationOnRedirect('$redirect');" alt="icon new" title="Add new destination to this redirect"/>
+                 </td>    
+                 <td class="enfasi">
+                   $redirect
+                 </td>
+                 <td>
+                    <table class="inside">
+               HTM;
+         };
+
+         $htmRedirClose = <<<HTM
+                   </table>
+                 </td>
+             </tr>
+            HTM;
+
+         $htmDest = function ($ID, $redirect, $Target) {
+            return <<<HTM
+                    <tr>
+                       <td>
+                         $Target
+                       </td>
+                       <td class="icon">
+                         <form name="delete_redirect_$ID" action="{$_SERVER['PHP_SELF']}" method="POST">
+                            <input type="hidden" name="cmd" value="cmd_delete"/>
+                            <input type="hidden" name="idredirect" value="$ID"/>
+                            <img src="./img/trash.png" onClick="confirmDeleteRedirect(document.delete_redirect_$ID, '$redirect', '$Target');" alt="icon delete" title = "Delete destination of redirect"/>
+                         </form>
+                       </td>
+                    </tr>
+               HTM;
+         };
+
+         $aRow       = [];
+         $lastSource = null;
+         while (0 == ($iErr = $this->App->DB->fetchArray($aRow, $dbResultSet, MYSQLI_ASSOC)) && NULL !== $aRow)
+         {
+            if ($lastSource == $aRow['source'])
+            {
+               $sHtml .= $htmDest($aRow['id'], $aRow['source'], $aRow['destination']);
+            }
+            else
+            {
+               if (!empty($lastSource))
+                  $sHtml .= $htmRedirClose;
+
+               $sHtml .= $htmRedirOpen ($aRow['source']) . $htmDest($aRow['id'], $aRow['source'], $aRow['destination']);
+            }
+
+            $lastSource = $aRow['source'];
+         }
+
+         if (!empty($lastSource))
+            $sHtml .= $htmRedirClose;
+      }
+
+
+      if ($iErr == 0)
+      {
+         $scrollNumber = lib\makeListPages($this->aStat, $nEntries, 'Alias_ListPage');
+         $Page->addBody(<<<HTML
+            <h3>Existing Redirects</h3>
+            <div class="listgrid">
+                $scrollNumber
+                <table class="DatabaseList">
+                   <tr>
+                       <th colspan="2">Virtual mailbox</th>
+                       <th>Destinations</th>
+                   </tr>
+                   $sHtml
+                </table>
+            </div>
+         HTML
+         );
+      }
+
+      return ($iErr);
+   }
+}
