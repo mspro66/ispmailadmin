@@ -12,7 +12,7 @@ require_once('inc/lib.inc.php');
 require_once('inc/HtmlPage.inc.php');
 // Version
 define('IMA_VERSION_STR', "0.9.11");
-define('IMA_REVISION_STR', "1.1");
+define('IMA_REVISION_STR', "1.2");
 
 /**
  ** @public
@@ -451,9 +451,9 @@ class IspMailAdminApp
                             <li class="welcome">This is a revised version of the "ISPmail Admin" software originally made by Ole Jungclaussen</li>
                             <li class="welcome">The changes made to this software were developed by <a href="https://github.com/mspro66" target="_blank">&lt;/mspro66&gt;</a></li>
                             <li class="welcome">The database structure used is the same as that proposed by the fantastic 
-                                    <a href="https://workaround.org/ispmail-trixie/"  target="_blank"><i>ISPmail guide</i></a> with a small integration</li>
-                            <li class="welcome">If you want to know the changes and integrations made in this version of the software <a href="https://github.com/mspro66" target="_blank">click here</a>.</li>' . '<li class="welcome">Any suggestions or reports about this version of the software, you can do it on the 
-                                    <a href="https://github.com/mspro66" target="_blank">GitHub project page</a></li>
+                                    <a href="https://workaround.org/ispmail-trixie/" target="_blank"><i>ISPmail guide</i></a> with a small integration</li>
+                            <li class="welcome">Any suggestions or reports about this version of the software, you can do it on the 
+                                    <a href="https://github.com/mspro66/ispmailadmin/issues" target="_blank">GitHub project page</a></li>
                         </ul>
                HTM ))) ;
             break;
