@@ -150,7 +150,7 @@ class EmailAccounts
          $sMsg .= 'Account "' . $sAccount . '@' . $this->App->sDomSel . '" already exists!';
       }
       else if (!$this->App->verifyEmailIsBlacklisted($sMsg, $sAccount . '@' . $this->App->sDomSel)) ;
-      else if (!filter_var($sAccount, FILTER_VALIDATE_EMAIL))
+      else if (!filter_var($sAccount . '@' . $this->App->sDomSel, FILTER_VALIDATE_EMAIL))
       {
          $sMsg = 'The email address inserted is invalid!';
       }
